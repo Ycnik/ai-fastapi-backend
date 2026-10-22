@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     keycloak_jwks_url: str = "http://localhost:8080/realms/soldat/protocol/openid-connect/certs"
     keycloak_client_id: str = "soldat-api"
     keycloak_audience: str = "soldat-api"
+    keycloak_token_url: str = "http://localhost:8080/realms/soldat/protocol/openid-connect/token"
     keycloak_jwks_cache_seconds: int = 300
     keycloak_timeout_seconds: float = 5.0
 

@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, 
 from ..db import get_session
 from ..models import Geschlecht, Rang, Schweregrad, Waffe
 from ..schemas import SoldatCreate, SoldatResponse, SoldatUpdate, VerletzungResponse
+from ..security import require_roles
 from ..service import (
     DuplicateResourceError,
     SoldatNotFoundError,
@@ -34,7 +35,11 @@ def _parse_etag(value: str | None) -> int | None:
         return None
 
 
-@router.get("/{soldat_id}", response_model=SoldatResponse)
+@router.get(
+    "/{soldat_id}",
+    response_model=SoldatResponse,
+    dependencies=[Depends(require_roles("user", "admin"))],
+)
 async def get_soldat(
     soldat_id: int,
     response: Response,
@@ -51,7 +56,11 @@ async def get_soldat(
     return SoldatResponse.model_validate(soldat)
 
 
-@router.get("", response_model=list[SoldatResponse])
+@router.get(
+    "",
+    response_model=list[SoldatResponse],
+    dependencies=[Depends(require_roles("user", "admin"))],
+)
 async def list_soldaten(
     nachname: str | None = None,
     rang: Rang | None = None,
@@ -74,7 +83,11 @@ async def list_soldaten(
     return [SoldatResponse.model_validate(item) for item in soldaten]
 
 
-@router.get("/{soldat_id}/verletzungen", response_model=list[VerletzungResponse])
+@router.get(
+    "/{soldat_id}/verletzungen",
+    response_model=list[VerletzungResponse],
+    dependencies=[Depends(require_roles("user", "admin"))],
+)
 async def list_verletzungen(
     soldat_id: int,
     service: SoldatService = Depends(get_service),  # noqa: B008
@@ -84,7 +97,12 @@ async def list_verletzungen(
     return [VerletzungResponse.model_validate(item) for item in await service.injuries(soldat_id)]
 
 
-@router.post("", response_model=SoldatResponse, status_code=201)
+@router.post(
+    "",
+    response_model=SoldatResponse,
+    status_code=201,
+    dependencies=[Depends(require_roles("admin"))],
+)
 async def create_soldat(
     payload: SoldatCreate,
     response: Response,
@@ -99,7 +117,11 @@ async def create_soldat(
     return SoldatResponse.model_validate(soldat)
 
 
-@router.put("/{soldat_id}", status_code=204)
+@router.put(
+    "/{soldat_id}",
+    status_code=204,
+    dependencies=[Depends(require_roles("admin"))],
+)
 async def update_soldat(
     soldat_id: int,
     payload: SoldatUpdate,

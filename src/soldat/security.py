@@ -167,3 +167,19 @@ async def get_current_user(
             detail=str(exc),
             headers={"WWW-Authenticate": "Bearer"},
         ) from exc
+
+
+def require_roles(*required_roles: str):
+    """Erzeugt eine Dependency, die mindestens eine angegebene Rolle verlangt."""
+
+    async def dependency(
+        current_user: CurrentUser = Depends(get_current_user),  # noqa: B008
+    ) -> CurrentUser:
+        if not current_user.roles.intersection(required_roles):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Unzureichende Berechtigung",
+            )
+        return current_user
+
+    return dependency

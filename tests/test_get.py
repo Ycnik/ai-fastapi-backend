@@ -5,36 +5,42 @@ from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
-async def test_get_soldat_mit_etag(client: AsyncClient) -> None:
-    response = await client.get("/soldaten/1")
+async def test_get_soldat_mit_etag(client: AsyncClient, admin_headers: dict[str, str]) -> None:
+    response = await client.get("/soldaten/1", headers=admin_headers)
     assert response.status_code == 200
     assert response.headers["etag"] == '"0"'
     assert response.json()["ausruestung"]["seriennummer"] == "AOT-543ABC"
 
-    cached = await client.get("/soldaten/1", headers={"If-None-Match": '"0"'})
+    cached = await client.get("/soldaten/1", headers={**admin_headers, "If-None-Match": '"0"'})
     assert cached.status_code == 304
     assert cached.content == b""
 
 
 @pytest.mark.asyncio
-async def test_get_soldaten_filter(client: AsyncClient) -> None:
-    response = await client.get("/soldaten", params={"rang": "CAPTAIN", "limit": 10})
+async def test_get_soldaten_filter(client: AsyncClient, admin_headers: dict[str, str]) -> None:
+    response = await client.get(
+        "/soldaten", params={"rang": "CAPTAIN", "limit": 10}, headers=admin_headers
+    )
     assert response.status_code == 200
     assert [item["username"] for item in response.json()] == ["sophias"]
 
 
 @pytest.mark.asyncio
-async def test_get_soldat_und_verletzungen_404(client: AsyncClient) -> None:
-    missing = await client.get("/soldaten/999999")
+async def test_get_soldat_und_verletzungen_404(
+    client: AsyncClient, admin_headers: dict[str, str]
+) -> None:
+    missing = await client.get("/soldaten/999999", headers=admin_headers)
     assert missing.status_code == 404
 
-    injuries = await client.get("/soldaten/1/verletzungen")
+    injuries = await client.get("/soldaten/1/verletzungen", headers=admin_headers)
     assert injuries.status_code == 200
     assert injuries.json()[0]["verletzungsbezeichnung"] == "Knochenbruch"
 
 
 @pytest.mark.asyncio
-async def test_get_soldaten_pagination(client: AsyncClient) -> None:
-    response = await client.get("/soldaten", params={"limit": 1, "offset": 1})
+async def test_get_soldaten_pagination(client: AsyncClient, admin_headers: dict[str, str]) -> None:
+    response = await client.get(
+        "/soldaten", params={"limit": 1, "offset": 1}, headers=admin_headers
+    )
     assert response.status_code == 200
     assert len(response.json()) == 1
