@@ -17,7 +17,7 @@ from ..service import (
 router = APIRouter(prefix="/soldaten", tags=["Soldaten"])
 
 
-def get_service(session=Depends(get_session)) -> SoldatService:
+def get_service(session=Depends(get_session)) -> SoldatService:  # noqa: B008
     """DI-Hook für Service und spätere Security-Dependencies."""
     return SoldatService(session)
 
@@ -39,7 +39,7 @@ async def get_soldat(
     soldat_id: int,
     response: Response,
     if_none_match: Annotated[str | None, Header()] = None,
-    service: SoldatService = Depends(get_service),
+    service: SoldatService = Depends(get_service),  # noqa: B008
 ) -> SoldatResponse | Response:
     soldat = await service.get(soldat_id)
     if soldat is None:
@@ -60,7 +60,7 @@ async def list_soldaten(
     schweregrad: Schweregrad | None = None,
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
     offset: Annotated[int, Query(ge=0)] = 0,
-    service: SoldatService = Depends(get_service),
+    service: SoldatService = Depends(get_service),  # noqa: B008
 ) -> list[SoldatResponse]:
     soldaten = await service.list(
         nachname=nachname,
@@ -76,7 +76,8 @@ async def list_soldaten(
 
 @router.get("/{soldat_id}/verletzungen", response_model=list[VerletzungResponse])
 async def list_verletzungen(
-    soldat_id: int, service: SoldatService = Depends(get_service)
+    soldat_id: int,
+    service: SoldatService = Depends(get_service),  # noqa: B008
 ) -> list[VerletzungResponse]:
     if await service.get(soldat_id) is None:
         raise HTTPException(status_code=404, detail="Soldat nicht gefunden")
@@ -87,7 +88,7 @@ async def list_verletzungen(
 async def create_soldat(
     payload: SoldatCreate,
     response: Response,
-    service: SoldatService = Depends(get_service),
+    service: SoldatService = Depends(get_service),  # noqa: B008
 ) -> SoldatResponse:
     try:
         soldat = await service.create(payload)
@@ -103,7 +104,7 @@ async def update_soldat(
     soldat_id: int,
     payload: SoldatUpdate,
     if_match: Annotated[str | None, Header()] = None,
-    service: SoldatService = Depends(get_service),
+    service: SoldatService = Depends(get_service),  # noqa: B008
 ) -> Response:
     expected_version = _parse_etag(if_match)
     if if_match is None:

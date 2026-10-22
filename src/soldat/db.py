@@ -42,7 +42,7 @@ session_factory = create_session_factory(get_settings())
 
 
 async def get_session(
-    factory: async_sessionmaker[AsyncSession] = Depends(lambda: session_factory),
+    factory: async_sessionmaker[AsyncSession] = Depends(lambda: session_factory),  # noqa: B008
 ) -> AsyncIterator[AsyncSession]:
     """FastAPI-Dependency für eine transaktional nutzbare DB-Session."""
     async with factory() as session:

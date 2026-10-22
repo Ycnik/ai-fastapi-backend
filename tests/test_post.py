@@ -31,3 +31,19 @@ async def test_post_validierung(client: AsyncClient, test_soldat: None) -> None:
     invalid["geburtsdatum"] = "2999-01-01"
     response = await client.post("/soldaten", json=invalid)
     assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_post_duplikate_liefern_409(client: AsyncClient, test_soldat: None) -> None:
+    first = await client.post("/soldaten", json=payload())
+    assert first.status_code == 201
+
+    same_username = payload()
+    same_username["ausruestung"] = {"waffe": "Schrotflinte", "seriennummer": "AOT-OTHER"}
+    duplicate_username = await client.post("/soldaten", json=same_username)
+    assert duplicate_username.status_code == 409
+
+    same_serial = payload()
+    same_serial["username"] = "test.other"
+    duplicate_serial = await client.post("/soldaten", json=same_serial)
+    assert duplicate_serial.status_code == 409
