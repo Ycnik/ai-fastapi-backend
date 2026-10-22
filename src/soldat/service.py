@@ -3,7 +3,7 @@
 from collections.abc import Sequence
 from datetime import datetime
 
-from sqlalchemy import update
+from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -61,6 +61,14 @@ class SoldatService:
         return await self.repository.injuries(soldat_id)
 
     async def create(self, payload: SoldatCreate) -> Soldat:
+        if await self.session.scalar(select(Soldat.id).where(Soldat.username == payload.username)):
+            raise DuplicateResourceError("Username oder Seriennummer ist bereits vorhanden")
+        if await self.session.scalar(
+            select(Ausruestung.id).where(
+                Ausruestung.seriennummer == payload.ausruestung.seriennummer
+            )
+        ):
+            raise DuplicateResourceError("Username oder Seriennummer ist bereits vorhanden")
         soldat = Soldat(
             vorname=payload.vorname,
             nachname=payload.nachname,
@@ -85,6 +93,27 @@ class SoldatService:
         return result
 
     async def update(self, soldat_id: int, expected_version: int, payload: SoldatUpdate) -> int:
+        current_version = await self.session.scalar(
+            select(Soldat.version).where(Soldat.id == soldat_id)
+        )
+        if current_version is None:
+            raise SoldatNotFoundError("Soldat nicht gefunden")
+        if current_version != expected_version:
+            raise VersionConflictError("Die Version ist veraltet")
+        if await self.session.scalar(
+            select(Soldat.id).where(
+                Soldat.username == payload.username,
+                Soldat.id != soldat_id,
+            )
+        ):
+            raise DuplicateResourceError("Username oder Seriennummer ist bereits vorhanden")
+        if await self.session.scalar(
+            select(Ausruestung.id).where(
+                Ausruestung.seriennummer == payload.ausruestung.seriennummer,
+                Ausruestung.soldat_id != soldat_id,
+            )
+        ):
+            raise DuplicateResourceError("Username oder Seriennummer ist bereits vorhanden")
         result = await self.session.execute(
             update(Soldat)
             .where(Soldat.id == soldat_id, Soldat.version == expected_version)
