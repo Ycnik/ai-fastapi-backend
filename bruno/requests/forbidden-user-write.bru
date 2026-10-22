@@ -1,0 +1,32 @@
+meta {
+  name: User schreibt (403)
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/soldaten
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{userToken}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "vorname": "Bruno",
+    "nachname": "User",
+    "geburtsdatum": "2000-01-01",
+    "geschlecht": "WEIBLICH",
+    "rang": "REKRUT",
+    "username": "test.bruno.user",
+    "ausruestung": {
+      "waffe": "Klinge",
+      "seriennummer": "AOT-BRUNOUSER"
+    },
+    "verletzungen": []
+  }
+}

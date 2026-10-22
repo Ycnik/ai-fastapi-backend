@@ -1,0 +1,30 @@
+meta {
+  name: Token holen (user)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{keycloakTokenUrl}}
+  body: form-urlencoded
+  auth: none
+}
+
+headers {
+  Content-Type: application/x-www-form-urlencoded
+}
+
+body:form-urlencoded {
+  grant_type: password
+  client_id: {{keycloakClientId}}
+  username: user
+  password: {{keycloakTestPassword}}
+}
+
+script:post-response {
+  const body = res.getBody();
+  if (res.getStatus() !== 200 || !body.access_token) {
+    throw new Error("Keycloak lieferte keinen User-Token");
+  }
+  bru.setEnvVar("userToken", body.access_token);
+}

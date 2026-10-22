@@ -1,0 +1,30 @@
+meta {
+  name: Token holen (admin)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{keycloakTokenUrl}}
+  body: form-urlencoded
+  auth: none
+}
+
+headers {
+  Content-Type: application/x-www-form-urlencoded
+}
+
+body:form-urlencoded {
+  grant_type: password
+  client_id: {{keycloakClientId}}
+  username: admin
+  password: {{keycloakTestPassword}}
+}
+
+script:post-response {
+  const body = res.getBody();
+  if (res.getStatus() !== 200 || !body.access_token) {
+    throw new Error("Keycloak lieferte keinen Admin-Token");
+  }
+  bru.setEnvVar("adminToken", body.access_token);
+}
