@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "Soldat-Backend",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}
