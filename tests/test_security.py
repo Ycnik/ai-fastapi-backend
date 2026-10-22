@@ -1,6 +1,7 @@
 """Unit-nahe Tests für die Keycloak-JWT-Prüfung."""
 
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 import jwt
 import pytest
@@ -19,6 +20,19 @@ class StaticJwksClient(JwksClient):
 
     async def get_key(self, key_id: str) -> RSAPublicKey:
         return self.key
+
+
+class CountingJwksClient(JwksClient):
+    """Zählt JWKS-Ladevorgänge für den Cache-Test."""
+
+    def __init__(self, settings: Settings, key: object) -> None:
+        super().__init__(settings)
+        self.key = key
+        self.calls = 0
+
+    async def _load_keys(self) -> dict[str, Any]:
+        self.calls += 1
+        return {"test-key": self.key}
 
 
 @pytest.fixture
@@ -91,3 +105,12 @@ async def test_manipulierte_signatur_wird_abgelehnt(
     manipulated = token[:-1] + ("A" if token[-1] != "A" else "B")
     with pytest.raises(TokenValidationError):
         await validate_token(manipulated, settings, StaticJwksClient(public_key))
+
+
+@pytest.mark.asyncio
+async def test_jwks_werden_im_cache_wiederverwendet(settings: Settings) -> None:
+    expected_key = object()
+    client = CountingJwksClient(settings, expected_key)
+    assert await client.get_key("test-key") is expected_key
+    assert await client.get_key("test-key") is expected_key
+    assert client.calls == 1

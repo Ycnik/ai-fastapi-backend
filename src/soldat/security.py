@@ -3,6 +3,7 @@
 import asyncio
 import json
 import time
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Any
 
@@ -76,7 +77,7 @@ class JwksClient:
                     return key
             try:
                 keys = await self._load_keys()
-            except (httpx.HTTPError, ValueError, TypeError) as exc:
+            except (httpx.HTTPError, jwt.PyJWTError, ValueError, TypeError) as exc:
                 raise TokenValidationError("Keycloak-JWKS konnten nicht geladen werden") from exc
             self._cache = _JwksCache(
                 keys=keys,
@@ -169,7 +170,7 @@ async def get_current_user(
         ) from exc
 
 
-def require_roles(*required_roles: str):
+def require_roles(*required_roles: str) -> Callable[..., Awaitable[CurrentUser]]:
     """Erzeugt eine Dependency, die mindestens eine angegebene Rolle verlangt."""
 
     async def dependency(
