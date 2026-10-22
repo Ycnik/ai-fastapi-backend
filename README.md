@@ -104,9 +104,12 @@ Ohne Token oder mit ungültigem Token antwortet die API mit `401` und
 ### Bruno
 
 1. Server und Keycloak starten.
-2. In Bruno die Collection `bruno/` und das Environment `local` öffnen.
-3. `Token holen (admin)` oder `Token holen (user)` ausführen.
-4. Die geschützten Requests verwenden danach automatisch den gespeicherten
+2. Einmalig `bruno/environments/local.example.bru` nach
+   `bruno/environments/local.bru` kopieren. Diese lokale Datei bleibt wegen der
+   kurzlebigen Tokenwerte außerhalb von Git.
+3. In Bruno die Collection `bruno/` und das Environment `local` öffnen.
+4. `Token holen (admin)` oder `Token holen (user)` ausführen.
+5. Die geschützten Requests verwenden danach automatisch den gespeicherten
    Bearer-Token. Die Requests `Ohne Token (401)`, `Ungültiges Token (401)` und
    `User schreibt (403)` zeigen die Fehlerfälle.
 

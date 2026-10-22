@@ -13,5 +13,6 @@ password.txt
 server.key
 server.crt
 extras/postgres/Untitled-1.sql
+bruno/environments/local.bru
 *.log
 
