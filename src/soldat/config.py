@@ -16,6 +16,12 @@ class Settings(BaseSettings):
     db_ssl_cert: str | None = "extras/postgres/init/tls/server.crt"
     db_pool_size: int = 5
     db_max_overflow: int = 10
+    keycloak_issuer_url: str = "http://localhost:8080/realms/soldat"
+    keycloak_jwks_url: str = "http://localhost:8080/realms/soldat/protocol/openid-connect/certs"
+    keycloak_client_id: str = "soldat-api"
+    keycloak_audience: str = "soldat-api"
+    keycloak_jwks_cache_seconds: int = 300
+    keycloak_timeout_seconds: float = 5.0
 
     model_config = SettingsConfigDict(
         env_file=".env",
