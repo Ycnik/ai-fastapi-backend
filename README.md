@@ -23,7 +23,8 @@ Schema und Tabellen einmalig eingespielt:
 ```powershell
 docker compose -f extras/postgres/compose.yml up -d
 docker exec -i postgres psql -U postgres -d soldat -f /init/soldat/sql/create-schema.sql
-docker exec -i postgres psql -U postgres -d soldat -f /init/soldat/sql/create-tables.sql
+docker cp extras/postgres/init/soldat/sql/create-tables.sql postgres:/tmp/create-tables.sql
+docker exec -e PGPASSWORD=p postgres psql -U soldat -d soldat -f /tmp/create-tables.sql
 ```
 
 Falls die Datenbank noch nicht initialisiert wurde, sind `create-db.sql` und
