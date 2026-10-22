@@ -1,0 +1,32 @@
+meta {
+  name: Soldat aktualisieren
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{baseUrl}}/soldaten/1
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  If-Match: "0"
+}
+
+body:json {
+  {
+    "vorname": "Eren",
+    "nachname": "Jäger",
+    "geburtsdatum": "2000-01-01",
+    "geschlecht": "MAENNLICH",
+    "rang": "SOLDAT",
+    "username": "erenj",
+    "ausruestung": {
+      "waffe": "Klinge",
+      "seriennummer": "AOT-543ABC"
+    }
+  }
+}
+

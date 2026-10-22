@@ -1,0 +1,32 @@
+meta {
+  name: Soldat anlegen
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/soldaten
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "vorname": "Test",
+    "nachname": "Person",
+    "geburtsdatum": "2000-01-01",
+    "geschlecht": "WEIBLICH",
+    "rang": "REKRUT",
+    "username": "test.bruno",
+    "ausruestung": {
+      "waffe": "Klinge",
+      "seriennummer": "AOT-TESTBRUNO"
+    },
+    "verletzungen": []
+  }
+}
+
