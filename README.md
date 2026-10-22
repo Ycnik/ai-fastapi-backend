@@ -9,10 +9,7 @@ technische Bezeichner sind englisch.
 - Python 3.12 oder neuer
 - [uv](https://docs.astral.sh/uv/)
 - Docker mit laufendem PostgreSQL-Container aus `extras/postgres/`
-
-Keycloak, Authentifizierung und Rollen sind ausdrücklich nicht Bestandteil dieses
-Projekts. Die Router nutzen FastAPI-Dependencies, sodass später eine
-Security-Dependency ergänzt werden kann.
+- Docker mit Keycloak aus `keycloak/`
 
 ## Datenbank einrichten
 
@@ -38,6 +35,8 @@ die Identity-Sequenzen hinter den höchsten IDs.
 ```powershell
 uv sync
 Copy-Item .env.example .env
+docker compose -f extras/postgres/compose.yml up -d
+docker compose --env-file .env -f keycloak/compose.yml up -d
 uv run uvicorn soldat.main:app --app-dir src --reload
 ```
 
@@ -64,6 +63,76 @@ Der Realm-Import wurde mit Keycloak 26.8.1 erfolgreich geprüft. Der Password Gr
 lieferte für beide Testuser HTTP 200 und Bearer-Tokens. Die geprüften Tokenwerte
 waren `iss=http://localhost:8080/realms/soldat`, `azp=soldat-api`,
 `aud=soldat-api`; die Realm-Rollen waren `admin` beziehungsweise `user`.
+
+Tokenabruf per PowerShell mit `curl.exe`:
+
+```powershell
+$tokenUrl = "http://localhost:8080/realms/soldat/protocol/openid-connect/token"
+curl.exe -X POST $tokenUrl `
+  -H "Content-Type: application/x-www-form-urlencoded" `
+  --data "client_id=soldat-api&username=admin&password=p&grant_type=password"
+curl.exe -X POST $tokenUrl `
+  -H "Content-Type: application/x-www-form-urlencoded" `
+  --data "client_id=soldat-api&username=user&password=p&grant_type=password"
+```
+
+Die Passwortwerte `p` und `admin-dev-only` sind Dummy-Werte ausschließlich für
+die lokale Entwicklung. In einer echten Umgebung müssen sie ersetzt und niemals
+committet werden.
+
+### JWT-Prüfung
+
+Die API lädt die JWKS asynchron von `KEYCLOAK_JWKS_URL` und cached die Schlüssel
+für `KEYCLOAK_JWKS_CACHE_SECONDS`. Akzeptiert werden ausschließlich RS256-Tokens.
+Geprüft werden Signatur, `exp`, `iss` sowie Audience oder `azp`. Issuer, JWKS-URL,
+Client-ID und Audience kommen aus `.env` beziehungsweise `.env.example`.
+
+### Rollenmatrix
+
+| Endpunkt | `user` | `admin` |
+| --- | ---: | ---: |
+| `GET /soldaten` | Ja | Ja |
+| `GET /soldaten/{id}` | Ja | Ja |
+| `GET /soldaten/{id}/verletzungen` | Ja | Ja |
+| `POST /soldaten` | Nein (403) | Ja |
+| `PUT /soldaten/{id}` | Nein (403) | Ja |
+| `GET /health` | Öffentlich | Öffentlich |
+
+Ohne Token oder mit ungültigem Token antwortet die API mit `401` und
+`WWW-Authenticate: Bearer`. Ein gültiges Token ohne benötigte Rolle liefert `403`.
+
+### Bruno
+
+1. Server und Keycloak starten.
+2. In Bruno die Collection `bruno/` und das Environment `local` öffnen.
+3. `Token holen (admin)` oder `Token holen (user)` ausführen.
+4. Die geschützten Requests verwenden danach automatisch den gespeicherten
+   Bearer-Token. Die Requests `Ohne Token (401)`, `Ungültiges Token (401)` und
+   `User schreibt (403)` zeigen die Fehlerfälle.
+
+### Troubleshooting
+
+- Der erste Start von Keycloak kann wegen Quarkus-Optimierung und H2-Initialisierung
+  mehrere Minuten dauern. Die Logs zeigen danach `Realm 'soldat' imported` und
+  `Keycloak ... started`.
+- Für einen vollständig reproduzierbaren Neustart des Realm-Imports:
+
+  ```powershell
+  docker compose --env-file .env -f keycloak/compose.yml down -v
+  docker compose --env-file .env -f keycloak/compose.yml up -d
+  ```
+
+- Bei `401` zuerst prüfen, ob der Token frisch ist und `iss`, `aud` sowie `azp`
+  zu den Settings passen.
+- Bei fehlendem Keycloak überspringen die tokenabhängigen pytest-Tests mit einer
+  verständlichen Begründung; die Tests ohne Keycloak laufen weiterhin.
+
+### Annahmen
+
+- Keycloak läuft lokal unverschlüsselt auf Port 8080 im Dev-Modus; die Anwendung
+  und die Testuser sind nicht für Produktion gedacht.
+- Keycloak verwendet die eingebettete Dev-Datenbank und bleibt vollständig von der
+  Soldat-PostgreSQL-Datenbank getrennt.
 
 ## API
 
