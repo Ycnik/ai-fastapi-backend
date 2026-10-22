@@ -45,6 +45,26 @@ Die lokale PostgreSQL-Verbindung nutzt TLS. Für das selbstsignierte Zertifikat
 ist `DB_SSL_VERIFY=false` voreingestellt; für eine geprüfte Verbindung kann die
 Option zusammen mit `DB_SSL_CERT` aktiviert werden.
 
+## Keycloak (lokal)
+
+Keycloak läuft als eigener Docker-Stack und verwendet nicht die Soldat-Datenbank.
+Die Compose-Datei importiert den Realm reproduzierbar aus
+`keycloak/import/realm-export.json`:
+
+```powershell
+Copy-Item .env.example .env
+docker compose --env-file .env -f keycloak/compose.yml up -d
+```
+
+Die lokalen Dummy-Zugangsdaten (`admin`/`p` und `user`/`p`) sind ausschließlich
+für Entwicklung und Tests gedacht. Der Bootstrap-Admin wird über
+`KEYCLOAK_ADMIN_USERNAME` und `KEYCLOAK_ADMIN_PASSWORD` aus `.env` gesetzt.
+
+Der Realm-Import wurde mit Keycloak 26.8.1 erfolgreich geprüft. Der Password Grant
+lieferte für beide Testuser HTTP 200 und Bearer-Tokens. Die geprüften Tokenwerte
+waren `iss=http://localhost:8080/realms/soldat`, `azp=soldat-api`,
+`aud=soldat-api`; die Realm-Rollen waren `admin` beziehungsweise `user`.
+
 ## API
 
 - `GET /health` liefert `{"status": "ok"}`.
